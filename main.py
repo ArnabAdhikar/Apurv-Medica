@@ -106,7 +106,7 @@ async def start_chat():
     cl.user_session.set("session_id", session_id)
     
     # Initial welcome message
-    welcome_msg = """**Welcome to MediAI** 🩺💡..."""  # (same as before)
+    welcome_msg = """**Welcome to Apurv Medica** 🩺💡..."""  # (same as before)
     await cl.Message(content=welcome_msg).send()
     
     # Log initial message
@@ -174,7 +174,104 @@ async def handle_message(message: cl.Message):
     new_history = history + [user_message] + assistant_messages
     cl.user_session.set("history", new_history)
     
-    # Prepare UI elements (same as before)
+    elements = []
+    
+    # Create tabs for each model response
+    tabs = [
+        cl.Tab(name="Claude", id="claude", label="Claude Sonnet"),
+        cl.Tab(name="gemini", id="gemini", label="Gemini Pro"),
+        cl.Tab(name="compare", id="compare", label="Compare Responses")
+    ]
+    
+    # Create tab content
+    tab_content = []
+    
+    # Claude response
+    claude_res = validated_responses["Claude"]
+    claude_content = f"{claude_res.content}\n\n"
+    if claude_res.sources:
+        claude_content += "**Sources:**\n" + "\n".join(f"- {src}" for src in claude_res.sources)
+    if claude_res.warnings:
+        claude_content += "\n\n**Notes:**\n" + "\n".join(f"- ⚠️ {warn}" for warn in claude_res.warnings)
+    
+    tab_content.append(cl.TabContent(id="claude", content=claude_content))
+    
+    # Gemini response
+    gemini_res = validated_responses["Gemini"]
+    gemini_content = f"{gemini_res.content}\n\n"
+    if gemini_res.sources:
+        gemini_content += "**Sources:**\n" + "\n".join(f"- {src}" for src in gemini_res.sources)
+    if gemini_res.warnings:
+        gemini_content += "\n\n**Notes:**\n" + "\n".join(f"- ⚠️ {warn}" for warn in gemini_res.warnings)
+    
+    tab_content.append(cl.TabContent(id="gemini", content=gemini_content))
+    
+    # Comparison view
+    comparison_content = """**Response Comparison**\n\n"""
+    comparison_content += f"**Confidence Scores:**\n- Claude: {claude_res.confidence:.1%}\n- Gemini: {gemini_res.confidence:.1%}\n\n"
+    
+    # Highlight differences
+    claude_key = set(claude_res.content.split()[:50])  # Compare first 50 words
+    gemini_key = set(gemini_res.content.split()[:50])
+    differences = claude_key.symmetric_difference(gemini_key)
+    
+    if differences:
+        comparison_content += "**Key Differences:**\n"
+        comparison_content += "\n".join(f"- {diff}" for diff in differences if len(diff) > 3)
+    
+    tab_content.append(cl.TabContent(id="compare", content=comparison_content))
+    
+    # Create message with tabs
+    response_msg = cl.Message(content="", tabs=tabs, tab_content=tab_content)
+    
+    # Add confidence badges
+    elements.append(
+        cl.Badge(
+            name="confidence",
+            label=f"Claude Confidence: {claude_res.confidence:.0%}",
+            value=claude_res.confidence,
+            color="green" if claude_res.confidence > 0.7 else "yellow"
+        )
+    )
+    elements.append(
+        cl.Badge(
+            name="confidence",
+            label=f"Gemini Confidence: {gemini_res.confidence:.0%}",
+            value=gemini_res.confidence,
+            color="green" if gemini_res.confidence > 0.7 else "yellow"
+        )
+    )
+    
+    # Add disclaimer
+    elements.append(
+        cl.Notice(
+            name="disclaimer",
+            content="This information is not medical advice. Consult a healthcare professional.",
+            severity="warning"
+        )
+    )
+    
+    # Add feedback buttons
+    actions = [
+        cl.Action(name="helpful", value="yes", label="👍 Helpful"),
+        cl.Action(name="helpful", value="no", label="👎 Not Helpful"),
+        cl.Action(name="flag", value="flag", label="⚠️ Flag Content")
+    ]
+    
+    response_msg.elements = elements
+    response_msg.actions = actions
+    
+    await response_msg.update()
+
+@cl.action_callback("helpful")
+async def on_feedback(action: cl.Action):
+    await cl.Message(content=f"Thank you for your feedback!").send()
+    # In production: log feedback to database
+
+@cl.action_callback("flag")
+async def on_flag(action: cl.Action):
+    await cl.Message(content="This response has been flagged for review. Thank you!").send()
+    # In production: implement content moderation workflow
     # ... (rest of the UI code remains unchanged)
 
 # ... (keep all remaining code the same)

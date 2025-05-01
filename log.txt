@@ -1,0 +1,14 @@
+=== Medical Chatbot Conversation Log ===
+Session ID: session_20240501_1430_abc12345
+Date: 2024-05-01 14:30:45
+
+User: What are the symptoms of diabetes?
+
+Assistant (Claude): Diabetes symptoms include...
+Sources:
+- PMID: 12345678
+- American Diabetes Association
+
+Assistant (Gemini): Common signs of diabetes...
+Sources:
+- NIH Diabetes Guide

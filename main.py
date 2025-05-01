@@ -272,9 +272,6 @@ async def on_feedback(action: cl.Action):
 async def on_flag(action: cl.Action):
     await cl.Message(content="This response has been flagged for review. Thank you!").send()
     # In production: implement content moderation workflow
-    # ... (rest of the UI code remains unchanged)
-
-# ... (keep all remaining code the same)
 
 if __name__ == "__main__":
     # Verify AWS credentials

@@ -5,3 +5,9 @@ faiss-cpu==1.7.4
 sentence-transformers
 ctransformers
 python-dotenv
+boto3>=1.28.0
+pydantic
+anthropic
+google-generativeai
+langchain_huggingface
+huggingface-hub
